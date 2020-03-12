@@ -23,6 +23,8 @@ def main():
                         help="Azure DevOps Project")
     parser.add_argument("-t", "--pat", required=True, dest="pat",
                         help="Azure DevOps Personal Access Token")
+    parser.add_argument("--age", required=False, dest="age", default=120, type=int,
+                        help="age in days when last change of work item happened")
     args = parser.parse_args()
 
     # create a connection to the org
@@ -34,11 +36,11 @@ def main():
 
     # query relations
     wiql = Wiql(
-        query="""SELECT *
+        query=f"""SELECT *
             FROM workitemLinks
-            WHERE [Source].[System.TeamProject] = 'ESB'
+            WHERE [Source].[System.TeamProject] = '{args.project}'
             AND [Source].[System.WorkItemType] = 'Bug'
-            AND [Source].[System.ChangedDate] >= @today - 120
+            AND [Source].[System.ChangedDate] >= @today - {args.age}
             AND [System.Links.LinkType] = 'Child'
             MODE (MustContain)
         """
