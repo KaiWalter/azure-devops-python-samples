@@ -40,6 +40,8 @@ def main():
 
     parent_completed_states = [s.name for s in [
         t for t in wi_types if t.name == args.parent_type][0].states if s.category == 'Completed']
+    parent_removed_states = [s.name for s in [
+        t for t in wi_types if t.name == args.parent_type][0].states if s.category == 'Removed']
     child_completed_states = [s.name for s in [
         t for t in wi_types if t.name == args.child_type][0].states if s.category == 'Completed']
     child_removed_states = [s.name for s in [
@@ -71,18 +73,25 @@ def main():
                 wis = wit_client.get_work_item(wir.source.id)
                 wit = wit_client.get_work_item(wir.target.id)
 
-                if wis.fields['System.State'] in parent_completed_states:
+                if wis.fields['System.State'] in parent_completed_states or wis.fields['System.State'] in parent_removed_states:
                     print(f"{wis.fields['System.WorkItemType']} {wir.source.id} ({wis.fields['System.State']}) -> {wit.fields['System.WorkItemType']} {wir.target.id} ({wit.fields['System.State']})")
 
-                    if not wit.fields['System.State'] in child_completed_states and not wit.fields['System.State'] in child_removed_states:
-                        print(f" =>{child_completed_states[0]}")
+                    operations = []
 
-                        if args.update:
-                            operations = [JsonPatchOperation(
-                                op='replace', path=f'/fields/System.State', value=child_completed_states[0])]
-                            resp=wit_client.update_work_item(
-                                document = operations, id = wir.target.id)
-                            print(resp)
+                    if wis.fields['System.State'] in parent_completed_states and not wit.fields['System.State'] in child_completed_states and not wit.fields['System.State'] in child_removed_states:
+                        print(f" =>{child_completed_states[0]}")
+                        operations.append(JsonPatchOperation(
+                            op='replace', path=f'/fields/System.State', value=child_completed_states[0]))
+
+                    if wis.fields['System.State'] in parent_removed_states and not wit.fields['System.State'] in child_completed_states and not wit.fields['System.State'] in child_removed_states:
+                        print(f" =>{child_removed_states[0]}")
+                        operations.append(JsonPatchOperation(
+                            op='replace', path=f'/fields/System.State', value=child_removed_states[0]))
+
+                    if len(operations) > 0 and args.update:
+                        resp=wit_client.update_work_item(
+                            document = operations, id = wir.target.id)
+                        print(resp)
 
 
 if __name__ == '__main__':
