@@ -36,8 +36,8 @@ def main():
     # get a client
     wit_client = connection.clients.get_work_item_tracking_client()
 
+    # determine potential Completed+Removed states for the parent/child work item type
     wi_types = wit_client.get_work_item_types(args.project)
-
     parent_completed_states = [s.name for s in [
         t for t in wi_types if t.name == args.parent_type][0].states if s.category == 'Completed']
     parent_removed_states = [s.name for s in [
@@ -74,7 +74,8 @@ def main():
                 wit = wit_client.get_work_item(wir.target.id)
 
                 if wis.fields['System.State'] in parent_completed_states or wis.fields['System.State'] in parent_removed_states:
-                    print(f"{wis.fields['System.WorkItemType']} {wir.source.id} ({wis.fields['System.State']}) -> {wit.fields['System.WorkItemType']} {wir.target.id} ({wit.fields['System.State']})")
+                    print(
+                        f"{wis.fields['System.WorkItemType']} {wir.source.id} ({wis.fields['System.State']}) -> {wit.fields['System.WorkItemType']} {wir.target.id} ({wit.fields['System.State']})")
 
                     operations = []
 
@@ -89,8 +90,8 @@ def main():
                             op='replace', path=f'/fields/System.State', value=child_removed_states[0]))
 
                     if len(operations) > 0 and args.update:
-                        resp=wit_client.update_work_item(
-                            document = operations, id = wir.target.id)
+                        resp = wit_client.update_work_item(
+                            document=operations, id=wir.target.id)
                         print(resp)
 
 
