@@ -8,15 +8,11 @@ import os
 import pprint
 
 
-def emit(msg, *args):
-    print(msg % args)
-
-
 def main():
 
     # extract arguments
     parser = argparse.ArgumentParser(
-        description='push characteristics from parent work items to children')
+        description='push completed status from parent work items to children')
     parser.add_argument("-o", "--org", required=True, dest="url",
                         help="Azure DevOps Organization URL")
     parser.add_argument("-p", "--project", required=True, dest="project",
@@ -29,6 +25,8 @@ def main():
                         help="work item child type to filter for (Task,Product Backlog Item,...)")
     parser.add_argument("--age", required=False, dest="age", default=120, type=int,
                         help="age in days when last change of work item happened")
+    parser.add_argument("--update", required=False, action='store_true',
+                        dest="update", help="commit update to Azure DevOps")
     args = parser.parse_args()
 
     # create a connection to the org
@@ -61,7 +59,7 @@ def main():
     )
 
     wi_relations = wit_client.query_by_wiql(wiql, top=1000).work_item_relations
-    emit("Results: {0}".format(len(wi_relations)))
+    print(f'Results: {len(wi_relations)}')
 
     # process relations
     if wi_relations:
@@ -74,16 +72,17 @@ def main():
                 wit = wit_client.get_work_item(wir.target.id)
 
                 if wis.fields['System.State'] in parent_completed_states:
-                    print(
-                        f"{wir.source.id} ({wis.fields['System.State']}) -> {wir.target.id} ({wit.fields['System.State']})")
+                    print(f"{wis.fields['System.WorkItemType']} {wir.source.id} ({wis.fields['System.State']}) -> {wit.fields['System.WorkItemType']} {wir.target.id} ({wit.fields['System.State']})")
 
                     if not wit.fields['System.State'] in child_completed_states and not wit.fields['System.State'] in child_removed_states:
                         print(f" =>{child_completed_states[0]}")
-                        operations = [JsonPatchOperation(
-                            op='replace', path=f'/fields/System.State', value=child_completed_states[0])]
-                        resp=wit_client.update_work_item(
-                            document = operations, id = wir.target.id)
-                        print(resp)
+
+                        if args.update:
+                            operations = [JsonPatchOperation(
+                                op='replace', path=f'/fields/System.State', value=child_completed_states[0])]
+                            resp=wit_client.update_work_item(
+                                document = operations, id = wir.target.id)
+                            print(resp)
 
 
 if __name__ == '__main__':

@@ -8,10 +8,6 @@ import os
 import pprint
 
 
-def emit(msg, *args):
-    print(msg % args)
-
-
 def main():
 
     # extract arguments
@@ -31,6 +27,8 @@ def main():
                         help="comma separated list of field names to compare e.g. System.AreaPath,System.IterationPath")
     parser.add_argument("--age", required=False, dest="age", default=120, type=int,
                         help="age in days when last change of work item happened")
+    parser.add_argument("--update", required=False, action='store_true',
+                        dest="update", help="commit update to Azure DevOps")
     args = parser.parse_args()
 
     # create a connection to the org
@@ -54,7 +52,7 @@ def main():
     )
 
     wi_relations = wit_client.query_by_wiql(wiql, top=1000).work_item_relations
-    emit("Results: {0}".format(len(wi_relations)))
+    print(f'Results: {len(wi_relations)}')
 
     # process relations
     if wi_relations:
@@ -65,10 +63,10 @@ def main():
             if wir.source and wir.target:
 
                 # for each source (parent) / target (child) pair check field list
-                print(f'{wir.source.id}->{wir.target.id}')
-
                 wis = wit_client.get_work_item(wir.source.id)
                 wit = wit_client.get_work_item(wir.target.id)
+
+                print(f"{wis.fields['System.WorkItemType']} {wir.source.id} -> {wit.fields['System.WorkItemType']} {wir.target.id}")
 
                 fields_to_check = args.field_list.split(',')
                 operations = []
@@ -79,7 +77,7 @@ def main():
                         operations.append(JsonPatchOperation(
                             op='replace', path=f'/fields/{field}', value=wis.fields[field]))
                 
-                if len(operations) > 0:
+                if len(operations) > 0 and args.update:
                     resp = wit_client.update_work_item(document=operations, id=wir.target.id)                    
                     print(resp)
 
