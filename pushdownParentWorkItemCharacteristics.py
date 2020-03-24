@@ -68,11 +68,12 @@ def main():
 
                 print(f"{wis.fields['System.WorkItemType']} {wir.source.id} -> {wit.fields['System.WorkItemType']} {wir.target.id}")
 
-                fields_to_check = args.field_list.split(',')
                 operations = []
 
                 for field in fields_to_check:
-                    if wis.fields[field] != wit.fields[field]:
+                    if not field in wis.fields or not field in wit.fields:
+                        raise ValueError(f"field {field} unknown")
+                    elif wis.fields[field] != wit.fields[field]:
                         print(f' =>{field}')
                         operations.append(JsonPatchOperation(
                             op='replace', path=f'/fields/{field}', value=wis.fields[field]))
