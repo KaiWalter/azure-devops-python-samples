@@ -2,8 +2,16 @@
 
 Azure DevOps Python SDK samples and helper scripts
 
+---
+
 > DISCLAIMER: Use these scripts with utmost care and at your own risk!
 > By default the scripts only list the potential updates. Add `--update` flag for committing the update.
+
+---
+
+> These scripts refrain from using any kind of deep module or class structure so that the proposed functionality can be found in one place.
+
+---
 
 ## pushdownParentWorkItemCharacteristics
 
