@@ -38,14 +38,14 @@ def main():
 
     # determine potential Completed+Removed states for the parent/child work item type
     wi_types = wit_client.get_work_item_types(args.project)
-    parent_completed_states = [s.name for s in [
-        t for t in wi_types if t.name == args.parent_type][0].states if s.category == 'Completed']
-    parent_removed_states = [s.name for s in [
-        t for t in wi_types if t.name == args.parent_type][0].states if s.category == 'Removed']
-    child_completed_states = [s.name for s in [
-        t for t in wi_types if t.name == args.child_type][0].states if s.category == 'Completed']
-    child_removed_states = [s.name for s in [
-        t for t in wi_types if t.name == args.child_type][0].states if s.category == 'Removed']
+
+    parent_states = [t for t in wi_types if t.name == args.parent_type]
+    child_states = [t for t in wi_types if t.name == args.child_type]
+
+    parent_completed_states = [s.name for s in parent_states[0].states if s.category == 'Completed']
+    parent_removed_states = [s.name for s in parent_states[0].states if s.category == 'Removed']
+    child_completed_states = [s.name for s in child_states[0].states if s.category == 'Completed']
+    child_removed_states = [s.name for s in child_states[0].states if s.category == 'Removed']
 
     # query relations
     wiql = Wiql(
