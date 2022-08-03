@@ -42,3 +42,18 @@ Roll up child work items completed state to to non-completed parent work items.
 ```
 
 Use flag `--update` to actually commit an update to child work items.
+
+---
+
+## Python virtual environment setup
+
+### for Windows
+
+```PowerShell
+python -m pip install --upgrade pip
+pip3 install virtualenv
+python -m virtualenv .venv
+.venv\Scripts\python.exe -m pip install --upgrade pip
+.venv\Scripts\activate.ps1
+pip install -r .\requirements.txt
+```
