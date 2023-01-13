@@ -64,7 +64,7 @@ def main():
         """
     )
 
-    wi_relations = wit_client.query_by_wiql(wiql, top=1000).work_item_relations
+    wi_relations = wit_client.query_by_wiql(wiql, top=10000).work_item_relations
     print(f'Results: {len(wi_relations)}')
 
     # process relations
@@ -79,20 +79,21 @@ def main():
                 wis = wit_client.get_work_item(wir.source.id)
                 wit = wit_client.get_work_item(wir.target.id)
 
-                print(f"{wis.fields['System.WorkItemType']} {wir.source.id} -> {wit.fields['System.WorkItemType']} {wir.target.id}")
+                if args.update_all or (args.update_not_completed and not wit.fields['System.State'] in child_completed_states and not wit.fields['System.State'] in child_removed_states):
 
-                operations = []
+                    print(f"{wis.fields['System.WorkItemType']} {wir.source.id} -> {wit.fields['System.WorkItemType']} {wir.target.id}")
 
-                for field in fields_to_check:
-                    if not field in wis.fields or not field in wit.fields:
-                        raise ValueError(f"field {field} unknown")
-                    elif wis.fields[field] != wit.fields[field]:
-                        print(f' =>{field}')
-                        operations.append(JsonPatchOperation(
-                            op='replace', path=f'/fields/{field}', value=wis.fields[field]))
-                
-                if len(operations) > 0:
-                    if args.update_all or (args.update_not_completed and not wit.fields['System.State'] in child_completed_states and not wit.fields['System.State'] in child_removed_states):
+                    operations = []
+
+                    for field in fields_to_check:
+                        if not field in wis.fields or not field in wit.fields:
+                            raise ValueError(f"field {field} unknown")
+                        elif wis.fields[field] != wit.fields[field]:
+                            print(f' {field} {wis.fields[field]} --> {wit.fields[field]} ({wit.fields["System.State"]})')
+                            operations.append(JsonPatchOperation(
+                                op='replace', path=f'/fields/{field}', value=wis.fields[field]))
+                    
+                    if len(operations) > 0:
                         resp = wit_client.update_work_item(document=operations, id=wir.target.id)                    
                         print(resp)
 
